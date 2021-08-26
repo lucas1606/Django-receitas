@@ -1,8 +1,10 @@
 from django.db import models
 from datetime import datetime
+from pessoas.models import Pessoa #Importanto módulo pessoas
 
 # Create your models here.
 class Receita(models.Model):
+    pessoa = models.ForeignKey(Pessoa, on_delete=models.CASCADE) #determinar relecionamento de chave estangeira
     nome_receita = models.CharField(max_length=200)
     ingredientes = models.TextField()
     modo_preparo = models.TextField()
