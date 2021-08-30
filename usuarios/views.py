@@ -1,6 +1,7 @@
-from django.shortcuts import render,redirect
+from django.shortcuts import render,redirect, get_object_or_404
 from django.contrib.auth.models import User
-import  django.contrib.auth as auth
+from receitas.models import Receita
+from django.contrib import messages, auth
 
 
 # Create your views here.
@@ -15,6 +16,7 @@ def cadastro(request):
             return redirect('cadastro')
         print(nome, email, senha, senha2)
         if senha !=senha2:
+            messages.error(request, 'As senhas não são iguais')
             print('As senha não são iguais')
             return redirect('cadastro')
         if User.objects.filter(email=email).exists():
@@ -23,6 +25,7 @@ def cadastro(request):
         user = User.objects.create_user(username=nome, email=email, password=senha)
         user.save()
         print('usuário cadastrado com sucesso')
+        messages.success(request, 'Cadastro realizado com sucesso')
         return redirect('login')
     else:
         return render (request, 'usuarios/cadastro.html')
@@ -55,7 +58,16 @@ def logout(request):
 
 def dashboard(request):
     if request.user.is_authenticated:
-        return render(request, 'usuarios/dashboard.html')
+        id = request.user.id
+        receitas = Receita.objects.order_by('-data_receita').filter(pessoa=id)
+
+        dados = {
+            'receitas' : receitas,
+
+        }
+
+
+        return render(request, 'usuarios/dashboard.html', dados)
     else:
         return redirect('index')
 
@@ -68,8 +80,11 @@ def cria_receita(request):
         rendimento = request.POST['rendimento']
         categoria = request.POST['categoria']
         foto_receita = request.FILES['foto_receita']
-        print(nome_receita, ingredientes, modo_preparo, tempo_preparo,
-         rendimento, categoria, foto_receita)
+        user = get_object_or_404(User, pk=request.user.id)
+        receita = Receita.objects.create(pessoa=user, nome_receita = nome_receita,
+        ingredientes=ingredientes, modo_preparo=modo_preparo, tempo_preparo=tempo_preparo,
+        rendimento = rendimento, categoria=categoria, foto_receita=foto_receita )
+        receita.save()
         return redirect('dashboard')
     else:
         return render(request, 'usuarios/cria_receita.html')
